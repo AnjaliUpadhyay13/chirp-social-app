@@ -1,0 +1,44 @@
+/* ---------- Tabs ---------- */
+.tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 9; }
+.tab { flex: 1; background: none; border: 0; padding: 0; color: var(--text-muted); font-weight: 600; transition: background-color 0.15s var(--ease), color 0.15s var(--ease); }
+.tab span { display: inline-block; padding: 14px 4px; border-bottom: 4px solid transparent; }
+.tab:hover { background: var(--surface-2); }
+.tab.is-active { color: var(--accent-text); font-weight: 800; }
+.tab.is-active span { border-bottom-color: var(--accent-text); }
+.page-header + .tabs { top: 0; position: static; }
+@media (max-width: 700px) { .tabs { top: var(--topbar-h); } }
+
+/* ---------- Profile header ---------- */
+.profile { border-bottom: 0; }
+.profile__banner { height: 130px; background: linear-gradient(120deg, #c2410c, #6d28d9 55%, #0f766e); opacity: 0.9; }
+.profile__top { display: flex; align-items: flex-start; justify-content: space-between; padding: 0 18px; }
+.profile__avatar { margin-top: -48px; border: 4px solid var(--surface); border-radius: 50%; background: var(--surface); line-height: 0; }
+.profile__action { padding-top: 12px; }
+.profile__name { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; padding: 8px 18px 0; overflow-wrap: anywhere; }
+.profile__handle { color: var(--text-muted); padding: 0 18px; display: flex; align-items: center; gap: 8px; }
+.pill { background: var(--surface-2); color: var(--text-muted); font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 6px; }
+.profile__bio { padding: 10px 18px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.profile__joined { color: var(--text-muted); padding: 10px 18px 0; font-size: 14px; }
+.profile__counts { display: flex; gap: 18px; padding: 8px 18px 16px; color: var(--text-muted); }
+.profile__counts a:hover { text-decoration: underline; }
+.profile__counts strong { color: var(--text); }
+.btn--following:hover:not(:disabled), .btn--following:focus-visible { color: var(--danger); border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.08); }
+.modal--wide { max-width: 480px; }
+.modal--wide .modal__body { color: var(--text); }
+
+/* ---------- Post card extras ---------- */
+.post__context { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 2px; }
+.post__context a:hover, .post__replying a:hover { text-decoration: underline; }
+.post__replying { color: var(--text-muted); font-size: 14px; }
+.post__replying a { color: var(--accent-text); }
+.post__author { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.post__author:hover .post__name { text-decoration: underline; }
+
+/* ---------- User rows (followers / following) ---------- */
+.user-row { display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background-color 0.15s var(--ease); }
+.user-row:hover { background: color-mix(in srgb, var(--surface-2) 55%, transparent); }
+.user-row__main { flex: 1; min-width: 0; }
+.user-row__name { display: flex; flex-direction: column; line-height: 1.3; }
+.user-row__name:hover strong { text-decoration: underline; }
+.user-row__name span { color: var(--text-muted); font-size: 14px; }
+.user-row__bio { font-size: 14px; margin-top: 2px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }

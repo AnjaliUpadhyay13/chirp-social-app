@@ -1,0 +1,66 @@
+/* ===== Design tokens =====
+   Theme: deep navy surfaces + vivid orange accent + teal/green status colours.
+   Dark is the default look; light keeps the same orange accent on warm off-white.
+   Everything in the app reads these variables, so re-theming = editing this file only. */
+:root {
+  /* brand */
+  --accent: #f97316;            /* fills: buttons, active underline, brand mark */
+  --accent-hover: #ea580c;
+  --accent-text: #b83a0a;       /* orange used as TEXT/icons on light surfaces (WCAG AA) */
+  --on-accent: #ffffff;         /* text colour on top of --accent fills */
+  --accent-soft: rgba(249, 115, 22, 0.12);
+
+  /* status */
+  --danger: #dc2626;
+  --danger-fill: #dc2626;       /* background of destructive buttons (white text passes AA) */
+  --success: #059669;
+  --teal: #0d9488;
+  --warn: #ca8a04;
+
+  /* light surfaces */
+  --bg: #f7f4f0;
+  --surface: #ffffff;
+  --surface-2: #f1ede8;
+  --text: #1b1612;
+  --text-muted: #6b625a;
+  --border: #e6dfd7;
+  --shadow: 0 1px 2px rgba(27, 22, 18, 0.05), 0 4px 16px rgba(27, 22, 18, 0.07);
+  --shadow-lg: 0 8px 30px rgba(27, 22, 18, 0.16);
+
+  --radius-sm: 8px;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --space: 16px;
+
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --nav-w: 260px;
+  --feed-w: 600px;
+  --side-w: 340px;
+  --bottom-nav-h: 60px;
+  --topbar-h: 52px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+:root[data-theme='dark'] {
+  --accent: #f97316;
+  --accent-hover: #ea580c;
+  --accent-text: #fb923c;       /* orange text on dark surfaces */
+  --on-accent: #ffffff;         /* swap to #1a0f05 for maximum contrast on the vivid orange */
+  --accent-soft: rgba(249, 115, 22, 0.16);
+
+  --danger: #ef4444;
+  --danger-fill: #dc2626;
+  --success: #10b981;
+  --teal: #14b8a6;
+  --warn: #eab308;
+
+  --bg: #080c12;
+  --surface: #0e131b;
+  --surface-2: #161c26;
+  --text: #f1f5f9;
+  --text-muted: #94a0b0;
+  --border: #1f2733;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 18px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.65);
+  color-scheme: dark;
+}
