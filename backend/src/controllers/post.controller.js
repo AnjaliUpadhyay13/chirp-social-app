@@ -1,5 +1,6 @@
 import * as svc from '../services/post.service.js';
 import * as timeline from '../services/timeline.service.js';
+import * as bookmarkSvc from '../services/bookmark.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ok, created } from '../utils/response.js';
 
@@ -35,3 +36,11 @@ export const like = interaction(svc.like);
 export const unlike = interaction(svc.unlike);
 export const repost = interaction(svc.repost);
 export const unrepost = interaction(svc.unrepost);
+
+export const bookmark = interaction(bookmarkSvc.addBookmark);
+export const unbookmark = interaction(bookmarkSvc.removeBookmark);
+
+export const bookmarks = asyncHandler(async (req, res) => {
+  const { posts, nextCursor } = await bookmarkSvc.listBookmarks({ viewer: req.user, ...req.query });
+  ok(res, { posts }, { nextCursor });
+});

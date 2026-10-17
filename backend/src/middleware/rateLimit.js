@@ -17,3 +17,6 @@ export const authLimiter = rateLimit({ ...base, windowMs: 15 * 60 * 1000, limit:
 
 // Throttles content creation (posts and replies) per IP
 export const writeLimiter = rateLimit({ ...base, windowMs: 60 * 1000, limit: 30 });
+
+// Search hits the database with substring matches, so keep it modest per IP
+export const searchLimiter = rateLimit({ ...base, windowMs: 60 * 1000, limit: 60 });

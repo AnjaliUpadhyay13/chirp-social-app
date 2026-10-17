@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext.jsx';
 import { ToastProvider } from './context/ToastContext.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
+import { NotificationProvider } from './context/NotificationContext.jsx';
 import App from './App.jsx';
 
 export const USER = { id: '1', name: 'Anjali Upadhyay', username: 'anjali_u', email: 'anjali@example.com', avatar: '' };
@@ -41,7 +42,7 @@ export const healthOk = okRes({ status: 'ok', uptime: 5, database: 'connected', 
 export function renderApp(path = '/') {
   return render(
     <MemoryRouter initialEntries={[path]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <ThemeProvider><ToastProvider><AuthProvider><App /></AuthProvider></ToastProvider></ThemeProvider>
+      <ThemeProvider><ToastProvider><AuthProvider><NotificationProvider><App /></NotificationProvider></AuthProvider></ToastProvider></ThemeProvider>
     </MemoryRouter>,
   );
 }

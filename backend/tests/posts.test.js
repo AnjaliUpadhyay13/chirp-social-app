@@ -156,7 +156,7 @@ describe('GET /posts/feed', () => {
     const mine = await u2.agent.get(`${API}/posts/feed`);
     expect(mine.body.data.posts[0]).toMatchObject({ likeCount: 1, repostCount: 1, viewer: { liked: true, reposted: true } });
     const theirs = await u1.agent.get(`${API}/posts/feed`);
-    expect(theirs.body.data.posts[0].viewer).toEqual({ liked: false, reposted: false });
+    expect(theirs.body.data.posts[0].viewer).toEqual({ liked: false, reposted: false, bookmarked: false });
   });
 });
 

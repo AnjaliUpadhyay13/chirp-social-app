@@ -16,4 +16,6 @@ export const createPost = (text) => api('/posts', { method: 'POST', body: { text
 export const createReply = (id, text) => api(`/posts/${id}/replies`, { method: 'POST', body: { text } }).then((r) => r.data.post);
 export const deletePost = (id) => api(`/posts/${id}`, { method: 'DELETE' }).then((r) => r.data);
 export const setLike = (id, on) => api(`/posts/${id}/like`, { method: on ? 'POST' : 'DELETE' }).then((r) => r.data);
+export const setBookmark = (id, on) => api(`/posts/${id}/bookmark`, { method: on ? 'POST' : 'DELETE' }).then((r) => r.data);
+export const getBookmarks = (cursor, signal) => api(`/bookmarks${qs({ limit: 20, cursor })}`, { signal });
 export const setRepost = (id, on) => api(`/posts/${id}/repost`, { method: on ? 'POST' : 'DELETE' }).then((r) => r.data);

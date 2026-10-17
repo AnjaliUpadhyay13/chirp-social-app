@@ -20,6 +20,8 @@ router.post('/:id/replies', writeLimiter, validate(idParamSchema, 'params'), val
 
 router.post('/:id/like', validate(idParamSchema, 'params'), ctrl.like);
 router.delete('/:id/like', validate(idParamSchema, 'params'), ctrl.unlike);
+router.post('/:id/bookmark', validate(idParamSchema, 'params'), ctrl.bookmark);
+router.delete('/:id/bookmark', validate(idParamSchema, 'params'), ctrl.unbookmark);
 router.post('/:id/repost', validate(idParamSchema, 'params'), ctrl.repost);
 router.delete('/:id/repost', validate(idParamSchema, 'params'), ctrl.unrepost);
 

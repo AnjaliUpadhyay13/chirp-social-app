@@ -6,7 +6,7 @@ import Dropdown from './Dropdown.jsx';
 import Modal from './Modal.jsx';
 import { Icon } from './Icons.jsx';
 import { useToast } from '../context/ToastContext.jsx';
-import { deletePost, setLike, setRepost } from '../services/posts.js';
+import { deletePost, setBookmark, setLike, setRepost } from '../services/posts.js';
 import { timeAgo, fullDate } from '../utils/time.js';
 import { splitHashtags } from '../utils/text.js';
 
@@ -20,6 +20,7 @@ export default function PostCard({ post, me, variant = 'default', onUpdate, onDe
 
   const isOwner = me?.id === post.author.id;
   const { liked, reposted } = post.viewer;
+  const bookmarked = Boolean(post.viewer.bookmarked);
 
   // Optimistic toggle: update immediately, reconcile with the server's counts, roll back on failure.
   const toggle = async (kind) => {
@@ -40,6 +41,22 @@ export default function PostCard({ post, me, variant = 'default', onUpdate, onDe
       toast.error(err.message || `Could not ${kind} this post`);
     } finally {
       setBusy((b) => ({ ...b, [kind]: false }));
+    }
+  };
+
+  // Bookmarks are private and cheap, so no optimistic update: wait for the server, then update.
+  const toggleBookmark = async () => {
+    if (busy.bookmark) return;
+    const next = !bookmarked;
+    setBusy((b) => ({ ...b, bookmark: true }));
+    try {
+      const res = await setBookmark(post.id, next);
+      onUpdate?.(post.id, { viewer: { ...post.viewer, bookmarked: res.bookmarked } });
+      toast.success(res.bookmarked ? 'Saved to your bookmarks' : 'Removed from your bookmarks');
+    } catch (err) {
+      toast.error(err.message || 'Could not update your bookmarks');
+    } finally {
+      setBusy((b) => ({ ...b, bookmark: false }));
     }
   };
 
@@ -105,7 +122,7 @@ export default function PostCard({ post, me, variant = 'default', onUpdate, onDe
 
         <p className="post__text">
           {segments.map((s, i) => (s.type === 'tag'
-            ? <span key={i} className="hashtag">{s.value}</span>
+            ? <Link key={i} to={`/explore?q=${encodeURIComponent(s.value)}`} className="hashtag">{s.value}</Link>
             : <span key={i}>{s.value}</span>))}
         </p>
 
@@ -123,6 +140,10 @@ export default function PostCard({ post, me, variant = 'default', onUpdate, onDe
           <button type="button" className={`action action--like ${liked ? 'is-on' : ''}`} aria-pressed={liked}
             aria-label={`${liked ? 'Unlike' : 'Like'}, ${post.likeCount} likes`} onClick={() => toggle('like')}>
             <Icon name="heart" size={18} filled={liked} /><span>{post.likeCount || ''}</span>
+          </button>
+          <button type="button" className={`action action--save ${bookmarked ? 'is-on' : ''}`} aria-pressed={bookmarked}
+            aria-label={bookmarked ? 'Remove bookmark' : 'Bookmark'} onClick={toggleBookmark} disabled={busy.bookmark}>
+            <Icon name="save" size={18} filled={bookmarked} />
           </button>
         </div>
       </div>

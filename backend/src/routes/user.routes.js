@@ -13,6 +13,8 @@ router.use(requireAuth);
 
 router.patch('/me', validate(updateProfileSchema), ctrl.updateMe); // must stay above '/:username'
 
+router.get('/suggestions', paged, ctrl.suggestions); // must stay above '/:username'
+
 router.get('/:username', byName, ctrl.profile);
 router.get('/:username/posts', byName, paged, ctrl.posts);
 router.get('/:username/replies', byName, paged, ctrl.replies);

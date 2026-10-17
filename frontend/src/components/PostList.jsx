@@ -5,7 +5,7 @@ import ErrorState from './ErrorState.jsx';
 import Button from './Button.jsx';
 
 // Renders every state of a usePaginatedPosts() list: loading, error, empty, items + load more.
-export default function PostList({ list, me, onDelete, onReplyClick, emptyTitle, emptyMessage, emptyIcon = 'inbox' }) {
+export default function PostList({ list, me, onDelete, onUpdate, onReplyClick, emptyTitle, emptyMessage, emptyIcon = 'inbox' }) {
   if (list.status === 'loading') {
     return <div className="post-list" aria-busy="true">{[1, 2, 3].map((i) => <div key={i} className="post-list__skeleton"><PostSkeleton /></div>)}</div>;
   }
@@ -18,7 +18,7 @@ export default function PostList({ list, me, onDelete, onReplyClick, emptyTitle,
   return (
     <div className="post-list">
       {list.items.map((post) => (
-        <PostCard key={post.feedId ?? post.id} post={post} me={me} onUpdate={list.update} onDelete={onDelete} onReplyClick={onReplyClick} />
+        <PostCard key={post.feedId ?? post.id} post={post} me={me} onUpdate={onUpdate ?? list.update} onDelete={onDelete} onReplyClick={onReplyClick} />
       ))}
       <div className="post-list__footer">
         {list.loadMoreError && <p className="post-list__error" role="alert">Couldn't load more posts.</p>}

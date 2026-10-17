@@ -1,0 +1,64 @@
+/* ---------- Search bar ---------- */
+.searchbar {
+  display: flex; align-items: center; gap: 10px; margin: 12px 18px;
+  padding: 4px 8px 4px 14px; background: var(--surface-2); border: 1px solid transparent; border-radius: 999px;
+  color: var(--text-muted); transition: border-color 0.15s var(--ease), background-color 0.15s var(--ease);
+}
+.searchbar:focus-within { border-color: var(--accent); background: var(--surface); }
+.searchbar__input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--text); font: inherit; padding: 9px 0; }
+.searchbar__input:focus { outline: none; }
+.searchbar__input::placeholder { color: var(--text-muted); }
+.searchbar__input::-webkit-search-cancel-button { display: none; }
+
+.section-title { font-size: 19px; font-weight: 800; padding: 16px 18px 4px; }
+
+/* ---------- Trends ---------- */
+.trend { display: flex; flex-direction: column; padding: 10px 18px; transition: background-color 0.15s var(--ease); }
+.trend:hover { background: var(--surface-2); }
+.trend__meta { color: var(--text-muted); font-size: 12px; }
+.trend__tag { font-size: 16px; font-weight: 800; overflow-wrap: anywhere; }
+.trend__count { color: var(--text-muted); font-size: 13px; }
+
+/* ---------- Right sidebar cards ---------- */
+.card .trend, .card .suggest { padding-left: 16px; padding-right: 16px; }
+.card__more { display: block; padding: 14px 16px; color: var(--accent-text); font-weight: 600; }
+.card__more:hover { background: var(--surface-2); }
+.card .side-loading { display: flex; flex-direction: column; gap: 10px; padding: 16px; }
+.side-note { padding: 14px 16px 18px; color: var(--text-muted); font-size: 14px; }
+.link-btn { background: none; border: 0; padding: 0; color: var(--accent-text); font-weight: 600; text-decoration: underline; }
+.suggest { display: flex; align-items: center; gap: 10px; padding: 10px 16px; }
+.suggest__name { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+.suggest__name strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.suggest__name:hover strong { text-decoration: underline; }
+.suggest__name span { color: var(--text-muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- Bookmark action ---------- */
+.action--save:hover, .action--save.is-on { color: var(--accent-text); }
+.action--save:hover { background: var(--accent-soft); }
+.action--save { min-width: 40px; }
+
+/* ---------- Notifications ---------- */
+.page-header--space { justify-content: space-between; }
+.notif { display: flex; align-items: flex-start; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--border); position: relative; transition: background-color 0.15s var(--ease); }
+.notif:hover { background: var(--surface-2); }
+.notif.is-unread { background: var(--accent-soft); }
+.notif.is-unread:hover { background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface-2)); }
+.notif__icon { flex: none; display: grid; place-items: center; width: 36px; height: 36px; }
+.notif__icon--like { color: #f91880; }
+.notif__icon--repost { color: var(--teal); }
+.notif__icon--reply { color: var(--accent-text); }
+.notif__icon--follow { color: var(--accent-text); }
+.notif__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.notif__text { overflow-wrap: anywhere; }
+.notif__time { color: var(--text-muted); font-size: 13px; }
+.notif__snippet { color: var(--text-muted); overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.notif__dot { flex: none; width: 10px; height: 10px; margin-top: 12px; border-radius: 50%; background: var(--accent); }
+
+/* ---------- Unread badge on the nav ---------- */
+.nav-item__icon { position: relative; display: inline-flex; }
+.nav-badge {
+  position: absolute; top: -6px; right: -9px; min-width: 18px; height: 18px; padding: 0 5px;
+  display: grid; place-items: center; border-radius: 999px;
+  background: var(--accent); color: var(--on-accent); font-size: 11px; font-weight: 800; line-height: 1;
+  box-shadow: 0 0 0 2px var(--surface);
+}

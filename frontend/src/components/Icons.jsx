@@ -12,6 +12,7 @@ const PATHS = {
   close: 'M6.4 5 5 6.4l5.6 5.6L5 17.6 6.4 19l5.6-5.6 5.6 5.6 1.4-1.4-5.6-5.6L19 6.4 17.6 5 12 10.6z',
   logo: 'M5 7.5A3.5 3.5 0 0 1 8.5 4h7A3.5 3.5 0 0 1 19 7.5v5a3.5 3.5 0 0 1-3.5 3.5H12l-4.5 4v-4h0A3.5 3.5 0 0 1 5 12.5z',
   refresh: 'M12 4a8 8 0 0 0-7.7 6h2.1A6 6 0 0 1 12 6c1.7 0 3.2.7 4.3 1.8L13 11h7V4l-2.6 2.6A7.9 7.9 0 0 0 12 4zm7.7 10a8 8 0 0 1-13.4 2.4L4 19v-7h7l-3.3 3.3A6 6 0 0 0 17.6 14z',
+  save: 'M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z',
   heart: 'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.2l7.8-7.7 1-1.1a5.5 5.5 0 0 0 0-7.8z',
   comment: 'M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z',
   repeat: 'M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3',
@@ -22,7 +23,7 @@ const PATHS = {
 };
 
 // Icons drawn as outlines (stroke) instead of filled shapes. `filled` fills the heart when liked.
-const STROKE = new Set(['heart', 'comment', 'repeat', 'trash', 'more', 'back']);
+const STROKE = new Set(['save', 'heart', 'comment', 'repeat', 'trash', 'more', 'back']);
 
 export function Icon({ name, size = 22, className = '', filled = false, ...rest }) {
   const stroke = STROKE.has(name);

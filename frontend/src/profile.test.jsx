@@ -43,7 +43,7 @@ describe('navigation', () => {
     const calls = mockApi(base);
     renderApp('/ab');
     expect(await screen.findByText(/this page doesn't exist/i)).toBeInTheDocument();
-    expect(calls.some((c) => c.key.startsWith('GET /users/'))).toBe(false);
+    expect(calls.some((c) => c.key === 'GET /users/ab')).toBe(false); // (the sidebar's /users/suggestions call is unrelated)
   });
 });
 

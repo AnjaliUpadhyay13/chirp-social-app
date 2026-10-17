@@ -11,7 +11,7 @@ Full-stack social media app: React + Vite frontend, Express + MongoDB backend, R
 | 2 | Authentication: register, login, logout, session restore, protected routes (frontend + API) | **Done** |
 | 3 | Posts, feed (load more), delete, likes, replies/threads, reposts | **Done** |
 | 4 | Profiles: view/edit, follow/unfollow, followers/following lists, profile tabs, "Following" timeline | **Done** |
-| 5 | Bookmarks, search, trending, suggested users, notifications | Next |
+| 5 | Bookmarks, search (people + posts), trending hashtags, suggested users, notifications with unread badge | **Done** |
 | 6 | Polish, accessibility, final tests | Planned |
 
 ## Prerequisites
@@ -61,7 +61,7 @@ Or change `PORT` in `backend\.env` and `VITE_PROXY_TARGET` in `frontend\.env`.
 
 ```powershell
 npm test                      # backend + frontend
-npm --prefix backend test     # API integration tests (Vitest + Supertest + real MongoDB): auth, posts, users/follows
+npm --prefix backend test     # API integration tests (Vitest + Supertest + real MongoDB): auth, posts, users/follows, bookmarks, notifications, search
 npm --prefix frontend test    # component/flow tests (Vitest + Testing Library)
 ```
 
@@ -73,6 +73,20 @@ To use your own MongoDB instead, point the tests at it (each run uses its own th
 $env:TEST_MONGODB_URI = "mongodb://127.0.0.1:27017"
 npm --prefix backend test
 ```
+
+### Manual test checklist (Phase 5: bookmarks, search, trending, notifications)
+
+Use two accounts again (A normal window, B incognito).
+
+1. A posts `Learning #mern today`. B posts `#mern is fun` and `#react rocks`. Right sidebar **Trends for you** now lists `#mern` (2 people) first. Click it -> **Explore** opens with both posts.
+2. **Explore** with an empty box shows *Trending hashtags* and *Who to follow*. Type `mern` -> results appear after a short pause. Switch to the **People** tab, search `rohan` (or any username/name) and follow from the results.
+3. In search try `.*`, `(` and `[a-z` -> no crash, no results (they are matched literally).
+4. B follows A -> A's **Notifications** item in the left nav shows a badge (1). B likes A's post, reposts it and replies -> badge 4. Like, unlike, like again -> still only one *liked your post* entry.
+5. A opens **Notifications**: unread ones are highlighted. Click one -> it opens the post/profile, the highlight goes and the badge drops by one. **Mark all as read** clears the badge.
+6. B unfollows A -> A's "followed you" notification disappears. A deletes the liked post -> its like/reply notifications disappear.
+7. B clicks the bookmark icon on a post -> toast *Saved to your bookmarks*. **Bookmarks** page lists it; the page says only you can see it. Remove it there -> it leaves the list. A's Bookmarks page never shows B's saves.
+8. **Who to follow** in the sidebar and on Explore never shows yourself or people you already follow. Follow from there -> button flips to *Following*.
+9. Stop the backend -> sidebar cards show *Couldn't load ... Retry*, Explore/Notifications/Bookmarks show an error with **Try again**; restart and retry works.
 
 ### Manual test checklist (Phase 4: profiles and follows)
 
@@ -127,19 +141,20 @@ backend/src
   config/       env validation (zod), db connection, CORS
   middleware/   auth (requireAuth/optionalAuth), validate, rateLimit, notFound, errorHandler
   routes/       /api/v1 router (health, config, auth)
-  models/       User, Post, Like, Repost, Follow
-  validators/   auth, post, user (zod)
+  models/       User, Post, Like, Repost, Follow, Bookmark, Notification
+  validators/   auth, post, user, search (zod)
   services/     auth (register/login, Argon2id), post (feed, threads, likes, reposts, delete),
-                timeline (posts + reposts merge, following feed), user (profile, follow, lists)
-  controllers/  auth, post, user
+                timeline (posts + reposts merge, following feed), user (profile, follow, lists, suggestions),
+                bookmark, notification (create/withdraw/list/read), search (people, posts, trending)
+  controllers/  auth, post, user, notification, search
   utils/        ApiError, asyncHandler, response envelope
 frontend/src
-  components/   Button, Avatar, Skeleton, EmptyState, ErrorState, FormField, Dropdown, Modal, Tabs, Composer, PostCard, PostList, FollowButton, UserRow, EditProfileModal, UserMenu, ProtectedRoute, nav pieces
+  components/   Button, Avatar, Skeleton, EmptyState, ErrorState, FormField, Dropdown, Modal, Tabs, Composer, PostCard, PostList, FollowButton, UserRow, SuggestedUser, TrendItem, EditProfileModal, UserMenu, ProtectedRoute, nav pieces
   layouts/      MainLayout (3-column / tablet / mobile), AuthLayout
-  pages/        Login, Register, Home (For you / Following), PostDetail, Profile, FollowList + placeholders
-  context/      ThemeContext, ToastContext, AuthContext
-  services/     api.js (fetch wrapper, cookies included), auth.js, posts.js, users.js
-  hooks/        usePaginatedPosts, usePostLimit, useApiHealth
+  pages/        Login, Register, Home (For you / Following), PostDetail, Profile, FollowList, Explore, Bookmarks, Notifications
+  context/      ThemeContext, ToastContext, AuthContext, NotificationContext (unread badge)
+  services/     api.js (fetch wrapper, cookies included), auth.js, posts.js, users.js, search.js, notifications.js
+  hooks/        usePaginatedPosts, usePostLimit, useDebounce, useRemote, useApiHealth
   styles/       tokens, base, layout, components
 ```
 
@@ -167,6 +182,15 @@ Error:   `{ "success": false, "error": { "code": "VALIDATION_ERROR", "message": 
 | POST / DELETE | `/api/v1/posts/:id/like` | required | Like / unlike (idempotent). Returns `{ liked, likeCount }` |
 | POST / DELETE | `/api/v1/posts/:id/repost` | required | Repost / undo (idempotent). Returns `{ reposted, repostCount }` |
 | GET | `/api/v1/posts/feed?scope=following` | required | You + people you follow (posts and their reposts). `scope=global` (default) = everyone |
+| POST / DELETE | `/api/v1/posts/:id/bookmark` | required | Bookmark / remove (idempotent). Returns `{ bookmarked }` |
+| GET | `/api/v1/bookmarks?limit=&cursor=` | required | **Your own** bookmarks, newest bookmark first |
+| GET | `/api/v1/search?q=&type=posts\|users&limit=&cursor=` | required | `type=posts` (default): text match, or exact hashtag for `#tag`; cursor-paginated. `type=users`: username/name match, capped list |
+| GET | `/api/v1/search/trending?limit=` | required | `{ trends: [{ tag, posts, authors }] }` for the last 7 days |
+| GET | `/api/v1/users/suggestions?limit=` | required | People you don't follow yet (not you), most-followed first |
+| GET | `/api/v1/notifications?limit=&cursor=` | required | **Your** notifications, newest first: `{ id, type, actor, post, readAt, createdAt }` |
+| GET | `/api/v1/notifications/unread-count` | required | `{ unreadCount }` |
+| PATCH | `/api/v1/notifications/:id/read` | owner only | Mark one read (someone else's id -> 404) |
+| PATCH | `/api/v1/notifications/read-all` | required | Mark all of yours read |
 | GET | `/api/v1/users/:username` | required | Public profile + `viewer: { isMe, following, followedBy }` (no email) |
 | PATCH | `/api/v1/users/me` | self only | Edit `name`, `bio` (max 160), `avatar` (http/https URL or empty). Anything else -> 400 |
 | GET | `/api/v1/users/:username/posts` | required | Their top-level posts **and reposts** (`repostedBy` set on reposts), cursor-paginated |
@@ -175,7 +199,7 @@ Error:   `{ "success": false, "error": { "code": "VALIDATION_ERROR", "message": 
 | POST / DELETE | `/api/v1/users/:username/follow` | required | Follow / unfollow (idempotent). Self-follow -> 400. Returns `{ following, followerCount }` |
 
 Timeline items (profile Posts tab, Following feed) also carry `feedId` (unique per entry) and, for reposts, `repostedBy`.
-Every post object: `{ id, text, hashtags, author:{id,name,username,avatar}, replyTo, rootPost, likeCount, replyCount, repostCount, createdAt, viewer:{liked,reposted} }`.
+Every post object: `{ id, text, hashtags, author:{id,name,username,avatar}, replyTo, rootPost, likeCount, replyCount, repostCount, createdAt, viewer:{liked,reposted,bookmarked} }`.
 Author emails and password hashes are never included.
 
 Status codes: `201` created, `400` validation (`error.details[]` = `{field, message}`), `401` not logged in / bad credentials,
@@ -214,6 +238,16 @@ secrets only via `.env` (git-ignored).
 - Post text is stored and rendered as plain text (React escapes it), so `<script>` in a post is harmless.
 - Optimistic UI for like/repost with server reconciliation and rollback on failure.
 
+## Bookmarks, search and notifications design (Phase 5)
+
+- **Bookmarks** are private by construction: the only read endpoint is `GET /bookmarks` and it always filters on the logged-in user. There is no bookmark count anywhere. Unique `{user, post}` index = no duplicates; deleting a post removes its bookmarks.
+- **Notifications** (`like`, `repost`, `reply`, `follow`) are created inside the same services that perform the action, only when the underlying row was really created (so double-clicks don't spam), never for your own actions, and **withdrawn when you undo** (unlike / unrepost / unfollow). Deleting a post removes the notifications that point at it. A unique `{recipient, actor, type, post}` index is the last line of defence. Notification failures are logged and never break the like/reply/follow itself.
+- **Access control:** every notification query is scoped to the recipient; another user's notification id behaves like a missing one (404).
+- **Unread badge:** the frontend refreshes the count on login, every 30 s while the tab is visible and when the window regains focus (polling, not websockets).
+- **Search** escapes the text and matches it literally (no regex injection). `#tag` searches use the indexed hashtag field; other text is a case-insensitive substring match. People search ranks exact username > prefix > partial, then by followers. The search box is debounced and the query lives in the URL (`/explore?q=...&tab=people`), so results are shareable and hashtags in posts link straight to them.
+- **Trending** = hashtags of the last 7 days, ranked by how many *different people* used them (so one person spamming a tag can't trend it), then by post count.
+- **Suggested users** = not you, not already followed, most-followed first.
+
 ## Profiles and follows design (Phase 4)
 
 - **Follow** is its own collection with a unique `{follower, following}` index; follower/following counters on `User` change only when a row is really created or removed (idempotent, race-safe, never negative). Self-follow is blocked on the server.
@@ -235,14 +269,16 @@ secrets only via `.env` (git-ignored).
 
 - Counters are kept in step with `$inc`, not in a transaction. If the server crashes between "row created" and "counter bumped" a count can drift by 1 (a reconcile script could fix that; not needed for v1).
 - Deleting a post also deletes the replies under it (other people's replies included).
+- Search uses substring matching without a text index (works on any MongoDB, fine for v1 sizes). On large datasets add a MongoDB text index / Atlas Search; the service is the only place to change.
+- Trending is computed in application code over the newest 5,000 posts that contain hashtags (identical behaviour on every MongoDB-compatible database). For big datasets switch to an aggregation pipeline or cached counters.
+- Notifications are polled every 30 s, not pushed in real time. Suggested users are popularity-based (no "friends of friends" yet).
+- `frontend/src/pages/ComingSoon.jsx` is no longer used by any route; you can delete it.
 - If someone you follow reposts a post by another person you follow, you see both entries (no de-duplication yet).
 - The "Following" timeline loads your follow list into one `$in` query, which is fine for normal accounts; accounts following tens of thousands of people would need a different approach.
 - Existing accounts created earlier with a name that is now reserved (e.g. `post`) keep working but their profile URL would be ambiguous; unlikely, but worth knowing.
-- Bookmarks, search/trending (hashtags are already stored), suggested users and notifications arrive in Phase 5; the post text-search index is added then. Right-sidebar cards are still empty states until then.
 - Sessions are stateless JWTs: logout clears the cookie, but a copied token stays valid until it expires. A `tokenVersion`
   (revoke-all-sessions) can be added later if needed.
 - No password reset / email verification (not in the spec).
-- Explore, Notifications and Bookmarks pages are placeholders until Phase 5.
 - Right sidebar shows empty states until trends/suggestions exist.
 - Test note: the sandbox database (FerretDB) loses concurrent `$inc` updates, which real MongoDB doesn't, so "many *different* users like at the same instant" was verified sequentially there. The same-user concurrency tests (unique-index based) did run concurrently. Please run `npm test` once on real MongoDB.
 - Verification note: in the build sandbox the API, Vite proxy and cookie flow were exercised against a MongoDB-compatible

@@ -1,6 +1,9 @@
 import Post from '../models/Post.js';
 import Like from '../models/Like.js';
 import Repost from '../models/Repost.js';
+import Bookmark from '../models/Bookmark.js';
+import Notification from '../models/Notification.js';
+import { notify, unnotify } from './notification.service.js';
 import { ApiError } from '../utils/ApiError.js';
 import { extractHashtags } from '../utils/hashtags.js';
 
@@ -10,7 +13,7 @@ const AUTHOR_FIELDS = 'name username avatar';
 // ---------- serialisation ----------
 const idOf = (v) => (v ? String(v._id ?? v) : null);
 
-function toApi(post, liked, reposted) {
+function toApi(post, liked, reposted, bookmarked) {
   const a = post.author;
   return {
     id: idOf(post),
@@ -25,21 +28,23 @@ function toApi(post, liked, reposted) {
     replyCount: post.replyCount,
     repostCount: post.repostCount,
     createdAt: post.createdAt,
-    viewer: { liked, reposted },
+    viewer: { liked, reposted, bookmarked },
   };
 }
 
-// Adds per-viewer flags with 2 batched queries (no N+1).
+// Adds per-viewer flags (liked / reposted / bookmarked) with 3 batched queries (no N+1).
 export async function hydrate(posts, viewerId) {
   if (!posts.length) return [];
   const ids = posts.map((p) => p._id);
-  const [likes, reposts] = await Promise.all([
+  const [likes, reposts, bookmarks] = await Promise.all([
     Like.find({ user: viewerId, post: { $in: ids } }).select('post').lean(),
     Repost.find({ user: viewerId, post: { $in: ids } }).select('post').lean(),
+    Bookmark.find({ user: viewerId, post: { $in: ids } }).select('post').lean(),
   ]);
   const liked = new Set(likes.map((l) => String(l.post)));
   const reposted = new Set(reposts.map((r) => String(r.post)));
-  return posts.map((p) => toApi(p, liked.has(String(p._id)), reposted.has(String(p._id))));
+  const bookmarked = new Set(bookmarks.map((b) => String(b.post)));
+  return posts.map((p) => toApi(p, liked.has(String(p._id)), reposted.has(String(p._id)), bookmarked.has(String(p._id))));
 }
 
 export const populateAuthor = (q) => q.populate('author', AUTHOR_FIELDS).lean();
@@ -70,6 +75,7 @@ export async function createReply({ user, parentId, text }) {
     ancestors: [...parent.ancestors, parent._id],
   });
   await Post.updateOne({ _id: parent._id }, { $inc: { replyCount: 1 } });
+  await notify({ recipient: parent.author, actor: user._id, type: 'reply', post: doc._id });
 
   const post = await populateAuthor(Post.findById(doc._id));
   return (await hydrate([post], user._id))[0];
@@ -127,6 +133,8 @@ export async function deletePost({ user, id }) {
   await Promise.all([
     Like.deleteMany({ post: { $in: ids } }),
     Repost.deleteMany({ post: { $in: ids } }),
+    Bookmark.deleteMany({ post: { $in: ids } }),
+    Notification.deleteMany({ post: { $in: ids } }),
   ]);
   await Post.deleteMany({ _id: { $in: ids } });
   if (post.replyTo) await Post.updateOne({ _id: post.replyTo }, { $inc: { replyCount: -1 } });
@@ -141,24 +149,40 @@ async function counterOf(id, field) {
 }
 
 async function addInteraction(Model, field, { user, id }) {
-  await findPostOr404(id);
+  const post = await findPostOr404(id);
+  let created = false;
   try {
     await Model.create({ user: user._id, post: id });
     await Post.updateOne({ _id: id }, { $inc: { [field]: 1 } });
+    created = true;
   } catch (err) {
     if (err.code !== 11000) throw err; // already exists => no-op (double click, race, retry)
   }
-  return counterOf(id, field);
+  return { count: await counterOf(id, field), created, post };
 }
 
 async function removeInteraction(Model, field, { user, id }) {
   await findPostOr404(id);
   const res = await Model.deleteOne({ user: user._id, post: id });
   if (res.deletedCount) await Post.updateOne({ _id: id, [field]: { $gt: 0 } }, { $inc: { [field]: -1 } });
-  return counterOf(id, field);
+  return { count: await counterOf(id, field), removed: res.deletedCount > 0 };
 }
 
-export const like = async (args) => ({ liked: true, likeCount: await addInteraction(Like, 'likeCount', args) });
-export const unlike = async (args) => ({ liked: false, likeCount: await removeInteraction(Like, 'likeCount', args) });
-export const repost = async (args) => ({ reposted: true, repostCount: await addInteraction(Repost, 'repostCount', args) });
-export const unrepost = async (args) => ({ reposted: false, repostCount: await removeInteraction(Repost, 'repostCount', args) });
+// Notify the post's author only when the like/repost row was really created (not on an idempotent repeat).
+async function add(Model, field, type, args) {
+  const { count, created, post } = await addInteraction(Model, field, args);
+  if (created) await notify({ recipient: post.author, actor: args.user._id, type, post: post._id });
+  return count;
+}
+
+// Undoing withdraws the notification, so like -> unlike -> like yields exactly one (fresh, unread) notification.
+async function remove(Model, field, type, args) {
+  const { count, removed } = await removeInteraction(Model, field, args);
+  if (removed) await unnotify({ actor: args.user._id, type, post: args.id });
+  return count;
+}
+
+export const like = async (args) => ({ liked: true, likeCount: await add(Like, 'likeCount', 'like', args) });
+export const unlike = async (args) => ({ liked: false, likeCount: await remove(Like, 'likeCount', 'like', args) });
+export const repost = async (args) => ({ reposted: true, repostCount: await add(Repost, 'repostCount', 'repost', args) });
+export const unrepost = async (args) => ({ reposted: false, repostCount: await remove(Repost, 'repostCount', 'repost', args) });

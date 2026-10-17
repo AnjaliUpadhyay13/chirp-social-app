@@ -6,7 +6,9 @@ import Home from './pages/Home.jsx';
 import PostDetail from './pages/PostDetail.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
-import ComingSoon from './pages/ComingSoon.jsx';
+import Explore from './pages/Explore.jsx';
+import Notifications from './pages/Notifications.jsx';
+import Bookmarks from './pages/Bookmarks.jsx';
 import Profile, { ProfileRedirect } from './pages/Profile.jsx';
 import FollowList from './pages/FollowList.jsx';
 import NotFound from './pages/NotFound.jsx';
@@ -27,9 +29,9 @@ export default function App() {
         <Route element={<MainLayout />}>
           <Route index element={<Home />} />
           <Route path="post/:id" element={<PostDetail />} />
-          <Route path="explore" element={<ComingSoon title="Explore" phase={5} />} />
-          <Route path="notifications" element={<ComingSoon title="Notifications" phase={5} />} />
-          <Route path="bookmarks" element={<ComingSoon title="Bookmarks" phase={5} />} />
+          <Route path="explore" element={<Explore />} />
+          <Route path="notifications" element={<Notifications />} />
+          <Route path="bookmarks" element={<Bookmarks />} />
           <Route path="profile" element={<ProfileRedirect />} />
           <Route path=":username" element={<Profile />} />
           <Route path=":username/followers" element={<FollowList kind="followers" />} />

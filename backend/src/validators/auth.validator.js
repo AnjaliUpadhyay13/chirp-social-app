@@ -5,7 +5,7 @@ const RESERVED = new Set([
   'admin', 'administrator', 'api', 'app', 'login', 'logout', 'register', 'signup', 'home', 'explore',
   'notifications', 'bookmarks', 'profile', 'settings', 'search', 'compose', 'support', 'help', 'about',
   'root', 'system', 'chirp', 'null', 'undefined', 'me', 'i', 'u', 'post', 'posts', 'user', 'users',
-  'followers', 'following', 'static', 'assets', 'public', 'favicon', 'privacy', 'terms',
+  'followers', 'following', 'suggestions', 'trending', 'static', 'assets', 'public', 'favicon', 'privacy', 'terms',
 ]);
 
 const username = z

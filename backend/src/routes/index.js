@@ -5,6 +5,9 @@ import { ok } from '../utils/response.js';
 import authRoutes from './auth.routes.js';
 import postRoutes from './post.routes.js';
 import userRoutes from './user.routes.js';
+import bookmarkRoutes from './bookmark.routes.js';
+import notificationRoutes from './notification.routes.js';
+import searchRoutes from './search.routes.js';
 
 const router = Router();
 
@@ -19,5 +22,8 @@ router.get('/config', (_req, res) => ok(res, { postMaxLength: env.POST_MAX_LENGT
 router.use('/auth', authRoutes);
 router.use('/posts', postRoutes);
 router.use('/users', userRoutes);
+router.use('/bookmarks', bookmarkRoutes);
+router.use('/notifications', notificationRoutes);
+router.use('/search', searchRoutes);
 
 export default router;

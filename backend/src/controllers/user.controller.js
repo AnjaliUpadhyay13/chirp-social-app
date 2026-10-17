@@ -17,6 +17,8 @@ const pageOf = (fn, key) => asyncHandler(async (req, res) => {
   const result = await fn({ viewer: req.user, username: req.params.username, ...req.query });
   ok(res, { [key]: result[key] }, { nextCursor: result.nextCursor });
 });
+export const suggestions = asyncHandler(async (req, res) =>
+  ok(res, { users: await svc.suggestions({ viewer: req.user, limit: req.query.limit }) }));
 export const followers = pageOf(svc.listFollowers, 'users');
 export const following = pageOf(svc.listFollowing, 'users');
 export const posts = pageOf(svc.listUserPosts, 'posts');

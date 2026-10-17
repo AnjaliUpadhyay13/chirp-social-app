@@ -295,7 +295,7 @@ describe("GET /users/:username/posts (their posts + reposts)", () => {
     const p = await makePost(a.agent, 'likeable');
     await b.agent.post(`${API}/posts/${p.id}/like`);
     const res = await b.agent.get(`${API}/users/anjali_u/posts`);
-    expect(res.body.data.posts[0].viewer).toEqual({ liked: true, reposted: false });
+    expect(res.body.data.posts[0].viewer).toEqual({ liked: true, reposted: false, bookmarked: false });
   });
 
   it('repost disappears from the profile when the repost is undone or the original is deleted', async () => {

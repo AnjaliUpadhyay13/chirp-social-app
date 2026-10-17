@@ -1,6 +1,7 @@
 import User from '../models/User.js';
 import Post from '../models/Post.js';
 import Follow from '../models/Follow.js';
+import { notify, unnotify } from './notification.service.js';
 import { ApiError } from '../utils/ApiError.js';
 import { page } from './post.service.js';
 import { timeline } from './timeline.service.js';
@@ -54,15 +55,18 @@ const followerCountOf = async (id) => (await User.findById(id).select('followerC
 export async function follow({ user, username }) {
   const target = await findUserOr404(username);
   if (String(target._id) === String(user._id)) throw ApiError.badRequest("You can't follow yourself");
+  let created = false;
   try {
     await Follow.create({ follower: user._id, following: target._id });
     await Promise.all([
       User.updateOne({ _id: target._id }, { $inc: { followerCount: 1 } }),
       User.updateOne({ _id: user._id }, { $inc: { followingCount: 1 } }),
     ]);
+    created = true;
   } catch (err) {
     if (err.code !== 11000) throw err; // already following => no-op
   }
+  if (created) await notify({ recipient: target._id, actor: user._id, type: 'follow' });
   return { following: true, followerCount: await followerCountOf(target._id) };
 }
 
@@ -74,6 +78,7 @@ export async function unfollow({ user, username }) {
       User.updateOne({ _id: target._id, followerCount: { $gt: 0 } }, { $inc: { followerCount: -1 } }),
       User.updateOne({ _id: user._id, followingCount: { $gt: 0 } }, { $inc: { followingCount: -1 } }),
     ]);
+    await unnotify({ actor: user._id, recipient: target._id, type: 'follow' }); // withdraw only this pair's notification
   }
   return { following: false, followerCount: await followerCountOf(target._id) };
 }
@@ -126,4 +131,13 @@ export async function listUserReplies({ viewer, username, cursor, limit }) {
   const nameOf = new Map(parents.map((p) => [String(p._id), p.author?.username]));
 
   return { posts: posts.map((p) => ({ ...p, replyingTo: nameOf.get(p.replyTo) || null })), nextCursor };
+}
+
+// ---------- suggested users ("Who to follow") ----------
+// Not you, not people you already follow; most-followed first, newest as tie-break.
+export async function suggestions({ viewer, limit }) {
+  const rows = await Follow.find({ follower: viewer._id }).select('following').lean();
+  const exclude = [viewer._id, ...rows.map((r) => r.following)];
+  const users = await User.find({ _id: { $nin: exclude } }).sort({ followerCount: -1, _id: -1 }).limit(limit).select(PUBLIC_FIELDS).lean();
+  return users.map((u) => toPublicUser(u, { isMe: false, following: false }));
 }
